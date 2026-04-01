@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: Webhook API
+  version: 1.0.0
+  description: API for registering and managing webhook endpoints for payment events.
+
+paths:
+  /api/webhooks:
+    post:
+      tags:
+        - Webhooks
+      summary: Register a webhook
+      description: Registers an endpoint URL to receive a POST request after every new payment. URLs must be unique.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+      responses:
+        "201":
+          description: Webhook registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        "400":
+          description: Invalid request payload
+        "409":
+          description: URL already registered
+
+    get:
+      tags:
+        - Webhooks
+      summary: List all registered webhooks
+      responses:
+        "200":
+          description: List of all webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookResponse'
+
+  /api/webhooks/{id}:
+    delete:
+      tags:
+        - Webhooks
+      summary: Delete a webhook by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Webhook UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Webhook deleted successfully
+        "404":
+          description: Webhook not found
+
+components:
+  schemas:
+
+    CreateWebhookRequest:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+          pattern: "^https?://.*"
+          description: The endpoint URL that will receive POST requests on payment events
+          example: https://your-service.com/payment-hook
+        description:
+          type: string
+          maxLength: 255
+          description: Optional human-readable description of this webhook
+          example: Production payment listener
+
+    WebhookResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique webhook identifier
+          example: e5f6g7h8-1234-5678-abcd-ef1234567890
+        url:
+          type: string
+          description: Endpoint URL that receives payment event POSTs
+          example: https://your-service.com/payment-hook
+        description:
+          type: string
+          description: Optional description
+          example: Production payment listener
+        createdAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when the webhook was registered
+          example: 2025-01-01T12:00:00Z
+
+    CreatePaymentRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - zipCode
+        - cardNumber
+      properties:
+        firstName:
+          type: string
+          maxLength: 100
+          description: Cardholder first name
+          example: John
+        lastName:
+          type: string
+          maxLength: 100
+          description: Cardholder last name
+          example: Doe
+        zipCode:
+          type: string
+          pattern: "^[0-9]{5}(-[0-9]{4})?$"
+          description: Billing zip code
+          example: "10001"
+        cardNumber:
+          type: string
+          pattern: "^[0-9]{13,19}$"
+          description: Full card number — encrypted at rest, never stored in plaintext
+          example: "4111111111111111"
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique payment identifier
+          example: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        zipCode:
+          type: string
+          example: "10001"
+        cardLastFour:
+          type: string
+          description: Last 4 digits of the card — full PAN is never exposed
+          example: "1111"
+        createdAt:
+          type: string
+          format: date-time
+          description: UTC timestamp of payment creation
+          example: 2025-01-01T12:00:00Z
+
+    WebhookPayload:
+      type: object
+      properties:
+        eventType:
+          type: string
+          description: Event type identifier
+          example: PAYMENT_CREATED
+        occurredAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when the event occurred
+          example: 2025-01-01T12:00:00Z
+        payment:
+          $ref: '#/components/schemas/PaymentResponse'

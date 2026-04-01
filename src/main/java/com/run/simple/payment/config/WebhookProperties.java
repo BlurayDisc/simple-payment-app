@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "com/run/simple/payment/webhook")
+@ConfigurationProperties(prefix = "webhook")
 public class WebhookProperties {
 
   private Retry retry = new Retry();
