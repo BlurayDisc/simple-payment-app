@@ -1,0 +1,40 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: payment-db
+    environment:
+      POSTGRES_DB: paymentdb
+      POSTGRES_USER: payment_user
+      POSTGRES_PASSWORD: payment_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payment_user -d paymentdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: payment-app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: paymentdb
+      DB_USER: payment_user
+      DB_PASSWORD: payment_pass
+      # ⚠️ Replace with a real 32-byte Base64 key in production
+      # Generate: openssl rand -base64 32
+      ENCRYPTION_SECRET_KEY: dGhpcy1pcy1hLTMyLWJ5dGUta2V5MTIzNDU2
+    restart: on-failure
+
+volumes:
+  postgres_data:
