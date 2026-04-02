@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.run.simple.payment.BaseIntegrationTest;
 import com.run.simple.payment.model.DeliveryStatus;
 import com.run.simple.payment.model.Webhook;
-import com.run.simple.payment.model.WebhookDeliveryLog;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

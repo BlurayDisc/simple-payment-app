@@ -31,7 +31,6 @@ services:
       DB_NAME: paymentdb
       DB_USER: payment_user
       DB_PASSWORD: payment_pass
-      # ⚠️ Replace with a real 32-byte Base64 key in production
       # Generate: openssl rand -base64 32
       ENCRYPTION_SECRET_KEY: dGhpcy1pcy1hLTMyLWJ5dGUta2V5MTIzNDU2
     restart: on-failure

@@ -1,15 +1,13 @@
 package com.run.simple.payment.model;
 
+import java.time.Instant;
+import java.util.UUID;
 import lombok.Builder;
-import lombok.Value;
-import lombok.With;
+import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Aggregate root for a payment transaction.
@@ -17,30 +15,29 @@ import java.util.UUID;
  * <p>card_number_enc – AES-256-GCM encrypted, Base64-encoded card number. card_last_four –
  * Plaintext last 4 digits for display only; full PAN is never exposed.
  */
+@Data
 @Table("payment")
-@Value
 @Builder
-@With
 public class Payment {
 
-  @Id UUID id;
+  @Id private UUID id;
 
   @Column("first_name")
-  String firstName;
+  private String firstName;
 
   @Column("last_name")
-  String lastName;
+  private String lastName;
 
   @Column("zip_code")
-  String zipCode;
+  private String zipCode;
 
   @Column("card_number_enc")
-  String cardNumberEnc;
+  private String cardNumberEnc;
 
   @Column("card_last_four")
-  String cardLastFour;
+  private String cardLastFour;
 
   @CreatedDate
   @Column("created_at")
-  Instant createdAt;
+  private Instant createdAt;
 }

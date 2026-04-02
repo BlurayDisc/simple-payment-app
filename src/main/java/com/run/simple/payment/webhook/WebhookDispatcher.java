@@ -1,44 +1,39 @@
 package com.run.simple.payment.webhook;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.net.HttpHeaders;
 import com.run.simple.payment.config.WebhookProperties;
 import com.run.simple.payment.dto.WebhookPayload;
 import com.run.simple.payment.mapper.PaymentMapper;
-import com.run.simple.payment.model.DeliveryStatus;
 import com.run.simple.payment.model.Payment;
 import com.run.simple.payment.model.Webhook;
-import com.run.simple.payment.model.WebhookDeliveryLog;
-import com.run.simple.payment.repository.WebhookDeliveryLogRepository;
 import com.run.simple.payment.repository.WebhookRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
 
 /**
  * Asynchronously dispatches webhook events to all registered endpoints after a payment is created.
  *
  * <h2>Resilience strategy</h2>
+ *
  * <ol>
- *   <li><b>Async decoupling</b> — {@code @Async} runs each dispatch on a Java 21 virtual thread,
- *       so the payment HTTP response is returned to the caller immediately.</li>
- *   <li><b>Per-webhook isolation</b> — each registered URL is dispatched independently;
- *       a failure on one URL never affects delivery to others.</li>
+ *   <li><b>Async decoupling</b> — {@code @Async} runs each dispatch on a Java 21 virtual thread, so
+ *       the payment HTTP response is returned to the caller immediately.
+ *   <li><b>Per-webhook isolation</b> — each registered URL is dispatched independently; a failure
+ *       on one URL never affects delivery to others.
  *   <li><b>Retry with exponential backoff</b> — on a non-2xx response or connection failure,
- *       delivery is retried up to {@code webhook.retry.max-attempts} times with delays of
- *       {@code initialDelayMs * multiplier^attempt}.</li>
- *   <li><b>Delivery audit log</b> — every attempt (success or failure) is persisted to
- *       {@code webhook_delivery_log} with HTTP status, attempt number, and error detail.</li>
- *   <li><b>Dead-letter handling</b> — once all retries are exhausted the log entry is marked
- *       {@code FAILED} permanently. No infinite retry loops.</li>
+ *       delivery is retried up to {@code webhook.retry.max-attempts} times with delays of {@code
+ *       initialDelayMs * multiplier^attempt}.
+ *   <li><b>Dead-letter handling</b> — once all retries are exhausted the log entry is marked {@code
+ *       FAILED} permanently. No infinite retry loops.
  * </ol>
  */
 @Slf4j
@@ -47,14 +42,13 @@ import java.util.UUID;
 public class WebhookDispatcher {
 
   private final WebhookRepository webhookRepository;
-  private final WebhookDeliveryLogRepository deliveryLogRepository;
   private final WebhookProperties webhookProperties;
   private final PaymentMapper paymentMapper;
   private final ObjectMapper objectMapper;
 
   /**
-   * Entry point called by {@link com.run.simple.payment.service.PaymentService}.
-   * Runs on a virtual thread — one virtual thread per registered webhook URL.
+   * Entry point called by {@link com.run.simple.payment.service.PaymentService}. Runs on a virtual
+   * thread — one virtual thread per registered webhook URL.
    */
   @Async("virtualThreadExecutor")
   public void dispatchAsync(Payment payment) {
@@ -76,8 +70,6 @@ public class WebhookDispatcher {
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
       DeliveryResult result = doPost(webhook.getUrl(), payloadJson);
-
-      persistLog(webhook.getId(), payment.getId(), attempt, result);
 
       if (result.success()) {
         log.info(
@@ -121,7 +113,7 @@ public class WebhookDispatcher {
           HttpRequest.newBuilder()
               .uri(URI.create(url))
               .timeout(Duration.ofMillis(httpConfig.getReadTimeoutMs()))
-              .header("Content-Type", "application/json")
+              .header(HttpHeaders.CONTENT_TYPE, "application/json")
               .header("X-Event-Type", "PAYMENT_CREATED")
               .POST(HttpRequest.BodyPublishers.ofString(payloadJson))
               .build();
@@ -150,26 +142,6 @@ public class WebhookDispatcher {
     }
   }
 
-  private void persistLog(UUID webhookId, UUID paymentId, int attempt, DeliveryResult result) {
-    try {
-      WebhookDeliveryLog log =
-          WebhookDeliveryLog.builder()
-              .id(UUID.randomUUID())
-              .webhookId(webhookId)
-              .paymentId(paymentId)
-              .attemptNumber(attempt)
-              .status(result.success() ? DeliveryStatus.SUCCESS : DeliveryStatus.FAILED)
-              .httpStatus(result.httpStatus())
-              .errorMessage(truncate(result.errorMessage(), 1000))
-              .build();
-      deliveryLogRepository.save(log);
-    } catch (Exception e) {
-      // Log persistence must never crash the delivery loop
-      log.error(
-          "Failed to persist delivery log: webhookId={} paymentId={}", webhookId, paymentId, e);
-    }
-  }
-
   private void sleep(long ms) {
     try {
       Thread.sleep(ms);
@@ -177,13 +149,6 @@ public class WebhookDispatcher {
       Thread.currentThread().interrupt();
     }
   }
-
-  private String truncate(String value, int maxLength) {
-    if (value == null) return null;
-    return value.length() <= maxLength ? value : value.substring(0, maxLength);
-  }
-
-  // ── Result record ─────────────────────────────────────────────────────────
 
   private record DeliveryResult(boolean success, Integer httpStatus, String errorMessage) {}
 }
