@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
+@Getter
 @Builder
 @Jacksonized
 public class PaymentResponse {

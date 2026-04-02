@@ -5,12 +5,14 @@ import java.time.Instant;
 
 import com.run.simple.payment.model.WebhookEventType;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.jackson.Jacksonized;
 
 /**
  * The JSON body delivered to every registered webhook URL after a payment is created. Raw card
  * number is never included — only cardLastFour from PaymentResponse.
  */
+@Getter
 @Builder
 @Jacksonized
 public class WebhookPayload {

@@ -38,7 +38,7 @@ A Spring Boot REST API for processing payments with dynamic webhook notification
 
 ## Getting Started
 
-### Option 1 — Run with Docker Compose (Recommended)
+### Option 1 - Run with Docker Compose (Recommended)
 
 This starts both the PostgreSQL database and the application together.
 
@@ -68,11 +68,11 @@ docker-compose down -v
 
 ---
 
-### Option 2 — Run with Maven (Local Development)
+### Option 2 - Run with Maven (Local Development)
 
 This requires a running PostgreSQL instance.
 
-**Step 1 — Start PostgreSQL via Docker:**
+**Step 1 - Start PostgreSQL via Docker:**
 ```bash
 docker run -d \
   --name payment-db \
@@ -83,7 +83,7 @@ docker run -d \
   postgres:16
 ```
 
-**Step 2 — Run the application:**
+**Step 2 - Run the application:**
 ```bash
 ./mvnw spring-boot:run
 ```
@@ -99,7 +99,7 @@ Interactive Swagger UI is available at:
 http://localhost:8080/swagger-ui.html
 ```
 
-The full OpenAPI specification is available at the project root: [`openapi.yaml`](./openapi.yaml)
+The full OpenAPI specification is available at the project: [`simple-payment.yaml`](./openapi/simple-payment.yaml)
 
 ---
 
@@ -109,14 +109,16 @@ The full OpenAPI specification is available at the project root: [`openapi.yaml`
 
 #### Create a Payment
 ```bash
-curl -X POST http://localhost:8080/api/payments \
-  -H "Content-Type: application/json" \
+curl -X 'POST' \
+  'http://localhost:8080/api/payments' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
   -d '{
-    "firstName": "John",
-    "lastName": "Doe",
-    "zipCode": "10001",
-    "cardNumber": "4111111111111111"
-  }'
+  "firstName": "Run",
+  "lastName": "Yan",
+  "zipCode": "50093",
+  "cardNumber": "9594500421057179"
+}'
 ```
 
 **Response `201 Created`:**
@@ -147,20 +149,22 @@ curl http://localhost:8080/api/payments/{id}
 
 #### Register a Webhook
 ```bash
-curl -X POST http://localhost:8080/api/webhooks \
-  -H "Content-Type: application/json" \
+curl -X 'POST' \
+  'http://localhost:8080/api/webhooks' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
   -d '{
-    "url": "https://your-endpoint.com/payment-hook",
-    "description": "My payment listener"
-  }'
+  "url": "https://webhook.site/80c728de-53eb-4fc6-b9c9-df874f3397b8",
+  "description": "run'\''s webhook"
+}'
 ```
 
 **Response `201 Created`:**
 ```json
 {
   "id": "e5f6g7h8-...",
-  "url": "https://your-endpoint.com/payment-hook",
-  "description": "My payment listener",
+  "url": "https://webhook.site/80c728de-53eb-4fc6-b9c9-df874f3397b8",
+  "description": "run's webhook",
   "createdAt": "2025-01-01T12:00:00Z"
 }
 ```
@@ -204,11 +208,9 @@ When a payment is created, all registered webhooks receive a POST request with:
 
 The webhook delivery system is designed to be resilient to endpoint failures:
 
-- **Asynchronous** — webhook dispatch never blocks the payment creation response
-- **Retry with exponential backoff** — failed deliveries are retried up to 3 times (delays: 10s → 30s → 90s)
-- **Delivery audit log** — every delivery attempt is recorded in the database with status (`PENDING`, `SUCCESS`, `FAILED`) and HTTP response code
-- **Independent delivery** — a failure delivering to one webhook URL does not affect delivery to others
-- **Dead letter handling** — webhooks that exhaust all retries are marked `FAILED` and logged for observability
+- **Asynchronous** - webhook dispatch never blocks the payment creation response
+- **Retry with exponential backoff** - failed deliveries are retried up to 3 times (delays: 10s → 30s → 90s)
+- **Independent delivery** - a failure delivering to one webhook URL does not affect delivery to others
 
 ---
 
@@ -260,12 +262,10 @@ simple-payment-app/
     └── main/
         ├── java/com/example/payment/
         │   ├── controller/         # REST controllers
-        │   ├── service/            # Business logic
+        │   ├── service/            # Business logic, Webhook dispatcher & retry logic, AES-256-GCM encryption utilities
         │   ├── repository/         # JPA repositories
         │   ├── model/              # JPA entities
         │   ├── dto/                # Request/response DTOs
-        │   ├── webhook/            # Webhook dispatcher & retry logic
-        │   └── encryption/         # AES-256-GCM encryption utilities
         └── resources/
             ├── application.properties
             └── db/migration/       # Flyway SQL migrations

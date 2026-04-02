@@ -40,7 +40,6 @@ public class PaymentService {
 
     Payment payment =
         Payment.builder()
-            .id(UUID.randomUUID())
             .firstName(request.getFirstName())
             .lastName(request.getLastName())
             .zipCode(request.getZipCode())

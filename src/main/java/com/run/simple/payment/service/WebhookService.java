@@ -34,7 +34,6 @@ public class WebhookService {
 
     Webhook webhook =
         Webhook.builder()
-            .id(UUID.randomUUID())
             .url(request.getUrl())
             .description(request.getDescription())
             .build();
