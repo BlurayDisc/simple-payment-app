@@ -2,6 +2,8 @@ package com.run.simple.payment.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.Instant;
+
+import com.run.simple.payment.model.WebhookEventType;
 import lombok.Builder;
 import lombok.extern.jackson.Jacksonized;
 
@@ -13,7 +15,7 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 public class WebhookPayload {
 
-  private final String eventType;
+  private final WebhookEventType eventType;
 
   @JsonFormat(
       shape = JsonFormat.Shape.STRING,

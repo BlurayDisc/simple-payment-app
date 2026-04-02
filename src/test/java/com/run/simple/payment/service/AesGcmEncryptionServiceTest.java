@@ -1,4 +1,4 @@
-package com.run.simple.payment.encryption;
+package com.run.simple.payment.service;
 
 import static org.assertj.core.api.Assertions.*;
 

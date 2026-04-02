@@ -20,24 +20,24 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 public class Payment {
 
-  @Id private UUID id;
+  @Id private final UUID id;
 
   @Column("first_name")
-  private String firstName;
+  private final String firstName;
 
   @Column("last_name")
-  private String lastName;
+  private final String lastName;
 
   @Column("zip_code")
-  private String zipCode;
+  private final String zipCode;
 
   @Column("card_number_enc")
-  private String cardNumberEnc;
+  private final String cardNumberEnc;
 
   @Column("card_last_four")
-  private String cardLastFour;
+  private final String cardLastFour;
 
   @CreatedDate
   @Column("created_at")
-  private Instant createdAt;
+  private final Instant createdAt;
 }

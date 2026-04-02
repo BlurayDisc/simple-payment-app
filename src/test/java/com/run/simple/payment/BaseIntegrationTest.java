@@ -15,12 +15,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 /**
  * Base class for all integration tests.
  *
- * Spins up a single PostgreSQL container shared across the entire test suite
- * via the static @Container field — Testcontainers reuses the same container
- * for all subclasses, keeping the suite fast.
+ * <p>Spins up a single PostgreSQL container shared across the entire test suite via the
+ * static @Container field — Testcontainers reuses the same container for all subclasses, keeping
+ * the suite fast.
  *
- * Flyway runs automatically on context startup, so the schema is always clean
- * and correct per the migration scripts.
+ * <p>Flyway runs automatically on context startup, so the schema is always clean and correct per
+ * the migration scripts.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -48,13 +48,9 @@ public abstract class BaseIntegrationTest {
 
   @Autowired protected com.run.simple.payment.repository.WebhookRepository webhookRepository;
 
-  @Autowired
-  protected com.run.simple.payment.repository.WebhookDeliveryLogRepository deliveryLogRepository;
-
   /** Wipe all data between tests so each test starts from a clean state. */
   @BeforeEach
   void cleanDatabase() {
-    deliveryLogRepository.deleteAll();
     paymentRepository.deleteAll();
     webhookRepository.deleteAll();
   }

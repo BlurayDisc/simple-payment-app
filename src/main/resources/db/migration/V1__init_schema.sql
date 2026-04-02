@@ -27,20 +27,3 @@ CREATE TABLE webhook (
 
 -- Prevent duplicate webhook URLs
 CREATE UNIQUE INDEX uidx_webhook_url ON webhook (url);
-
--- ── Webhook Delivery Log ──────────────────────────────────────────────────────
--- Every dispatch attempt is recorded here for observability and debugging.
-CREATE TABLE webhook_delivery_log (
-    id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    webhook_id      UUID        NOT NULL REFERENCES webhook(id) ON DELETE CASCADE,
-    payment_id      UUID        NOT NULL REFERENCES payment(id) ON DELETE CASCADE,
-    attempt_number  SMALLINT    NOT NULL DEFAULT 1,
-    status          VARCHAR(20) NOT NULL DEFAULT 'PENDING',  -- PENDING | SUCCESS | FAILED
-    http_status     INT,
-    error_message   TEXT,
-    attempted_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_delivery_log_webhook  ON webhook_delivery_log (webhook_id);
-CREATE INDEX idx_delivery_log_payment  ON webhook_delivery_log (payment_id);
-CREATE INDEX idx_delivery_log_status   ON webhook_delivery_log (status);

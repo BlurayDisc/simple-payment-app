@@ -1,13 +1,10 @@
 package com.run.simple.payment.repository;
 
 import com.run.simple.payment.model.Payment;
+import java.util.UUID;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
-
+/** CrudRepository providing: save, findById, findAll, deleteById, etc for Payments. */
 @Repository
-public interface PaymentRepository extends CrudRepository<Payment, UUID> {
-  // CrudRepository provides: save, findById, findAll, deleteById, etc.
-  // Add custom query methods here if needed in future phases.
-}
+public interface PaymentRepository extends CrudRepository<Payment, UUID> {}

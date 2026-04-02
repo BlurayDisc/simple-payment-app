@@ -1,4 +1,4 @@
-package com.run.simple.payment.encryption;
+package com.run.simple.payment.service;
 
 import com.run.simple.payment.config.EncryptionProperties;
 import com.run.simple.payment.exception.EncryptionException;

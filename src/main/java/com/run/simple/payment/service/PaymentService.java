@@ -2,12 +2,10 @@ package com.run.simple.payment.service;
 
 import com.run.simple.payment.dto.CreatePaymentRequest;
 import com.run.simple.payment.dto.PaymentResponse;
-import com.run.simple.payment.encryption.AesGcmEncryptionService;
 import com.run.simple.payment.exception.PaymentNotFoundException;
 import com.run.simple.payment.mapper.PaymentMapper;
 import com.run.simple.payment.model.Payment;
 import com.run.simple.payment.repository.PaymentRepository;
-import com.run.simple.payment.webhook.WebhookDispatcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

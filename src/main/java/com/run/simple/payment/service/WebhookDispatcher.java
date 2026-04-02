@@ -1,4 +1,4 @@
-package com.run.simple.payment.webhook;
+package com.run.simple.payment.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.net.HttpHeaders;
@@ -7,6 +7,7 @@ import com.run.simple.payment.dto.WebhookPayload;
 import com.run.simple.payment.mapper.PaymentMapper;
 import com.run.simple.payment.model.Payment;
 import com.run.simple.payment.model.Webhook;
+import com.run.simple.payment.model.WebhookEventType;
 import com.run.simple.payment.repository.WebhookRepository;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -16,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class WebhookDispatcher {
 
+  private static final String EVENT_TYPE_HEADER = "X-Event-Type";
+
   private final WebhookRepository webhookRepository;
   private final WebhookProperties webhookProperties;
   private final PaymentMapper paymentMapper;
@@ -58,8 +62,16 @@ public class WebhookDispatcher {
     }
   }
 
-  // ── Internal delivery logic ───────────────────────────────────────────────
-
+  /**
+   * R.Y. Agent used an in-memory approach here which technically isn't resilient to failure, since
+   * the application can restart, crash, or connection failures etc.
+   *
+   * <p>In production the retry state should be stored in the database with a background worker Also
+   * Ideally this is a deployable instance, not within the same rpc deployable performs the retries.
+   *
+   * <p>External message queue can be used here on top for worker job message delivery, retry
+   * queues, and dead letter queues.
+   */
   private void deliverWithRetry(Webhook webhook, Payment payment) {
     WebhookProperties.Retry retryConfig = webhookProperties.getRetry();
     int maxAttempts = retryConfig.getMaxAttempts();
@@ -69,7 +81,8 @@ public class WebhookDispatcher {
     String payloadJson = buildPayload(payment);
 
     for (int attempt = 1; attempt <= maxAttempts; attempt++) {
-      DeliveryResult result = doPost(webhook.getUrl(), payloadJson);
+      DeliveryResult result =
+          doPost(webhook.getUrl(), WebhookEventType.PAYMENT_CREATED, payloadJson);
 
       if (result.success()) {
         log.info(
@@ -101,7 +114,7 @@ public class WebhookDispatcher {
         payment.getId());
   }
 
-  private DeliveryResult doPost(String url, String payloadJson) {
+  private DeliveryResult doPost(String url, WebhookEventType eventType, String payloadJson) {
     WebhookProperties.Http httpConfig = webhookProperties.getHttp();
     try {
       HttpClient client =
@@ -113,8 +126,8 @@ public class WebhookDispatcher {
           HttpRequest.newBuilder()
               .uri(URI.create(url))
               .timeout(Duration.ofMillis(httpConfig.getReadTimeoutMs()))
-              .header(HttpHeaders.CONTENT_TYPE, "application/json")
-              .header("X-Event-Type", "PAYMENT_CREATED")
+              .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+              .header(EVENT_TYPE_HEADER, eventType.toString())
               .POST(HttpRequest.BodyPublishers.ofString(payloadJson))
               .build();
 
@@ -132,7 +145,7 @@ public class WebhookDispatcher {
     try {
       WebhookPayload payload =
           WebhookPayload.builder()
-              .eventType("PAYMENT_CREATED")
+              .eventType(WebhookEventType.PAYMENT_CREATED)
               .occurredAt(Instant.now())
               .payment(paymentMapper.toResponse(payment))
               .build();

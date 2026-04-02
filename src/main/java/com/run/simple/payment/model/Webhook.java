@@ -18,15 +18,15 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 public class Webhook {
 
-  @Id private UUID id;
+  @Id private final UUID id;
 
   @Column("url")
-  private String url;
+  private final String url;
 
   @Column("description")
-  private String description;
+  private final String description;
 
   @CreatedDate
   @Column("created_at")
-  private Instant createdAt;
+  private final Instant createdAt;
 }
